@@ -44,6 +44,9 @@ def get_coreset_idx_randomp(
         coreset indices
     """
 
+    print(z_lib.device)
+    print(z_lib.shape)
+
     print(f"   Fitting random projections. Start dim = {z_lib.shape}.")
     try:
         transformer = random_projection.SparseRandomProjection(eps=eps)

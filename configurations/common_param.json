@@ -1,6 +1,6 @@
 {  
-    "num_tasks":10,
-    "task_order":[0,1,2,3,4,5,6,7,8,9],
+    "num_tasks":6,
+    "task_order":[0,1,2,3,4,5],
     "latent_dim":128,
     "lr":1e-3,
     "beta":1,
@@ -12,7 +12,7 @@
     "activation":"ReLU",
     "dropout1":true,
     "dropout2":false,
-    "dataset_name": "mvtec",
+    "dataset_name": "bmad",
     "transformation":"None",
     "show_plot":true,
     "apply_som":false,
@@ -23,7 +23,7 @@
 
     "resize":256,
     "crp_size":256,
-    "data_path":"data/mvtec",
+    "data_path":"/mnt/mydisk/manuel_barusco/datasets/bmad",
     "save_path":"mvtec_result",
     "Rd": false,
     "cnn": "wrn50_2",

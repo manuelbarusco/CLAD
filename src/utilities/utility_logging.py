@@ -209,7 +209,7 @@ def return_values_from_parameters(parameters):
 from argparse import Namespace
 def from_parameters_to_opt(parameters): #operational==opt
     crp_size = parameters["crp_size"] if "crp_size" in parameters else parameters["img_size"]
-    opt = Namespace(batch_size=parameters["batch_size"], channels=parameters["channels"],use_all_classes=True,only_normal=False,only_anomalies=False, class_name='toothbrush', clip_value=0.01, architecture = parameters['architecture'], anomaly_source_path = parameters['anomaly_source_path'],  anomaly_source_paths = parameters['anomaly_source_paths'],
+    opt = Namespace(batch_size=parameters["batch_size"], channels=parameters["channels"],use_all_classes=True,only_normal=False,only_anomalies=False, class_name='Brain_AD', clip_value=0.01, architecture = parameters['architecture'], anomaly_source_path = parameters['anomaly_source_path'],  anomaly_source_paths = parameters['anomaly_source_paths'],
     crp_size=crp_size, data_path=parameters["data_path"], img_size=parameters["img_size"],brightness=0.1, latent_dim=parameters["latent_dim"], lr=parameters["lr"], model_name='waae', n_critic=5, n_epochs=parameters["num_epochs"],gray=parameters["gray"],apply_rotation=parameters["apply_rotation"])
     opt.img_shape = (opt.channels, opt.img_size, opt.img_size)
     return opt

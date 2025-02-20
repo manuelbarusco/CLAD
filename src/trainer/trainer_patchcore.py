@@ -16,7 +16,7 @@ from src.utilities.utility_pix2pix import create_summary,create_summary_by_numpy
 from src.models.cfa_add.metric import *
 from src.models.cfa_add.visualizer import * 
 
-from adcl_paper.src.models.patchcore import *
+from src.models.patchcore import *
 
 #Added
 from src.utilities.utility_plot import*
@@ -34,6 +34,7 @@ class Trainer_patchcore():
         patch_lib = []
         batch_index = 0
         for batch in tqdm(dataloader):
+            
             batch = self.strategy.memory.create_batch_data(batch, batch[0].shape[0])
             x = batch[0]
             batch_size = x.size(0)
@@ -44,6 +45,7 @@ class Trainer_patchcore():
             x = x.to(self.ad_model.device)
             self.strategy.model.eval()
             feature_maps = self.ad_model(x, self.strategy.model)
+                        
 
             '''
             # only for debugging
@@ -108,8 +110,7 @@ class Trainer_patchcore():
 
         for batch in tqdm(dataloader):
             masks = []
-            data,indices,anomaly_info= batch[0],batch[2],batch[3]
-            #class_ids = batch[1]
+            data,indices,anomaly_info= batch[0],batch[2],batch[3] #img, idx, anomaly_info
             class_ids = batch[1]
             lista_indices.extend(batch[2].detach().numpy()) 
             test_imgs.extend(data.detach().numpy())
@@ -183,7 +184,6 @@ class Trainer_patchcore():
             mask = torch.stack(masks)
             gt_list.extend(anomaly_info.detach().cpu().numpy())
             gt_mask_list.extend(mask.detach().numpy())
-
 
         self.strategy.run.log({f"Task_average_precision/T{index_training}": precision/dataSize})
 

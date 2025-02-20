@@ -556,6 +556,7 @@ class Strategy_CL_AD:
 
             diz_test[test_task_index], other_data[test_task_index] = {}, {}
             test_dataset = test_stream[test_task_index]
+
             if architecture_name == "patchcore" or architecture_name == "padim" or architecture_name == "draem" or architecture_name == "efficientad":
                 test_data_loader = DataLoader(test_dataset , batch_size = 1, pin_memory = True)
             else:

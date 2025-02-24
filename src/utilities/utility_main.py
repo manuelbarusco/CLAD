@@ -45,7 +45,7 @@ def give_ad_parameters(parameters,index_training):
     elif test_all_dataset_together:
         num_tasks_to_examine = 1
     elif parameters["sample_strategy"]=="multi_task":
-        num_tasks_to_examine = 10
+        num_tasks_to_examine = 6 #TODO: check if I can set num_tasks
     else:
          num_tasks_to_examine = num_tasks
 

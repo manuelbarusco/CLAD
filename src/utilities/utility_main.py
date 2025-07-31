@@ -1,7 +1,7 @@
 from xml.dom.minidom import Entity
 import torch
 from torch.utils.data import DataLoader,ConcatDataset
-import numpy as np  
+import numpy as np
 import json
 import sys
 import wandb
@@ -25,7 +25,7 @@ from src.strategy_ad import *
 from src.trainer.trainer_cfa import *
 from adcl_paper.src.trainer.trainer_efficientad import *
 from src.trainer.trainer_st import *
-    
+
 def set_default_ad_parameters(parameters):
     num_tasks = parameters["num_tasks"]
     anomaly_detection_task = parameters.setdefault("anomaly_detection_task", False)
@@ -41,7 +41,7 @@ def give_ad_parameters(parameters,index_training):
     test_all_dataset_together = parameters.get("test_all_dataset_together")
 
     if test_only_seen_tasks and test_all_dataset_together==False:
-        num_tasks_to_examine = index_training+1 
+        num_tasks_to_examine = index_training+1
     elif test_all_dataset_together:
         num_tasks_to_examine = 1
     elif parameters["sample_strategy"]=="multi_task":
@@ -106,7 +106,7 @@ def load_memory_main(strategy,memory_dataset_path,type_memory):
 
         dataset_current_task = memory.tasks_memory[index_training]
         self.dataset_current_task = dataset_current_task
-        current_train_data_loader = DataLoader(dataset_current_task, shuffle=True, batch_size=self.batch_size) 
+        current_train_data_loader = DataLoader(dataset_current_task, shuffle=True, batch_size=self.batch_size)
     else:
         print(f"Create new memory train with sample_strategy: {self.sample_strategy}")
         memory = create_memory(self, self.task_order, self.path_logs, self.mem_size, self.index_training, self.sample_strategy)
@@ -116,7 +116,7 @@ def load_memory_reconstruct_main(strategy,type, memory_reconstruct_dataset_path,
     index_training = strategy.index_training
     task_order = strategy.task_order
 
-    if strategy.parameters["use_memory_reconstruct"] and  memory_reconstruct_dataset_path!="":   
+    if strategy.parameters["use_memory_reconstruct"] and  memory_reconstruct_dataset_path!="":
         print(f"Loading reconstruct memory: {memory_reconstruct_dataset_path}/{type_memory_reconstruct}")
 
         if strategy.parameters.get("test_only_seen_tasks") is False:
@@ -155,15 +155,15 @@ def load_model_main(strategy):
     memory_model_path = self.parameters.get("memory_model_path","")
     if self.parameters["use_model"] and memory_model_path=="":
         raise ValueError("use_model:True but memory_model_path is empty")
-    if self.parameters["use_model"] and memory_model_path!="":    
-        utility_logging.load_model(self, self.parameters["architecture"], memory_model_path, index_training) 
-    
+    if self.parameters["use_model"] and memory_model_path!="":
+        utility_logging.load_model(self, self.parameters["architecture"], memory_model_path, index_training)
+
 
 def save_model_main(strategy):
     self = strategy
     save_model_param = self.save_model#True
     index_training = self.index_training
-    #SAVE MODEL 
+    #SAVE MODEL
     if save_model_param:
         print("Save model")
         utility_logging.save_model(self, self.parameters["architecture"], strategy.path_logs, index_training)
@@ -190,14 +190,14 @@ def init_strategy_variables(strategy, complete_train_dataset,complete_test_datas
     strategy.run = run
     strategy.labels_map = labels_map
     strategy.path_logs = path_logs
-    
+
     #ADDED
     strategy.elapsed_time = elapsed_time
 
 
 def init_execute(credentials_path, default_path,parameters_path, seed, create_run=True) -> tuple:
     """
-    This method initialize the execution, set the parameters and create the wandb run object    
+    This method initialize the execution, set the parameters and create the wandb run object
 
     Args:
         credentials_path (str) : path to the credentials json path
@@ -207,7 +207,7 @@ def init_execute(credentials_path, default_path,parameters_path, seed, create_ru
         create_run (bool) : default True
 
     Return:
-        run (wandb.Run) : object of wandb with the run 
+        run (wandb.Run) : object of wandb with the run
         parameters (dict) : dictionary with the parameters values
         device (torch.device) : gpu that must be used
 
@@ -215,10 +215,10 @@ def init_execute(credentials_path, default_path,parameters_path, seed, create_ru
     f = open(f"{parameters_path}", "rb")
     parameters = json.load(f)#test specific
     parameters_specific = parameters.copy()
-    f.close()  
-  
+    f.close()
+
     f = open(f"{credentials_path}", "rb")
-    credentials = json.load(f)  
+    credentials = json.load(f)
     f.close()
 
     f = open(f"{default_path}", "rb")
@@ -250,9 +250,9 @@ def init_execute(credentials_path, default_path,parameters_path, seed, create_ru
     if "anomaly_source_paths" not in parameters:
         if parameters['architecture'] == "draem":
             parameters["anomaly_source_paths"] = sorted(glob.glob(parameters['anomaly_source_path']+"/*/*/*.jpg"))
-        else: 
+        else:
             parameters["anomaly_source_paths"] = []
-            
+
     #set the device for training
     if "device_id" in parameters:
         device_id = parameters["device_id"]
@@ -267,7 +267,7 @@ def init_execute(credentials_path, default_path,parameters_path, seed, create_ru
     torch.manual_seed(seed)
     if use_cuda:
         torch.cuda.manual_seed_all(seed)
-    
+
     print(device)
     parameters["device"] = device
     parameters["seed"] = seed
@@ -334,12 +334,12 @@ def create_new_labels_map(labels_map,task_order,num_tasks):
         if np.asarray(task_id).ndim==0:
             label = labels_map[task_id]
             labels_map_new[index_task] = label
-        else: 
+        else:
             classes_ids = task_id
             label = [ labels_map[class_id] for class_id in classes_ids  ]
-            label = ",".join(label)        
-            labels_map_new[index_task] = label       
-        
+            label = ",".join(label)
+            labels_map_new[index_task] = label
+
     labels_map = labels_map_new
     return labels_map
 
@@ -375,7 +375,7 @@ def manage_dataset(strategy, parameters,complete_train_dataset,complete_test_dat
         train_stream = [ ConcatDataset(train_stream) ]
         strategy.num_tasks = 1
         strategy.parameters["num_tasks"] = 1
-        
+
     if sample_strategy=="cumulative" or sample_strategy=="Cumulative":
         print(f"Sample Strategy used: {sample_strategy}")
         new_train_stream = [ ConcatDataset(train_stream[0:i+1]) for i in range(num_tasks) ]
@@ -399,12 +399,12 @@ def manage_dataset(strategy, parameters,complete_train_dataset,complete_test_dat
             print()
             for i in range(num_tasks):
                 print(f"len(test_stream{i}]): {len(test_stream[i])}")
-        else: 
+        else:
             test_stream = [ complete_test_dataset for i in range(num_tasks) ]
 
     return complete_train_dataset,complete_test_dataset,train_stream,test_stream
 
-    
+
 def memory_update_main(strategy):
     self = strategy
     new_memory = strategy.new_memory
@@ -415,6 +415,3 @@ def memory_update_main(strategy):
                 self.memory.memory_update(self.task_train_dataset, self.index_training)
             else:
                 self.memory.memory_update(self.memory.tasks_memory[task_id_old], self.index_training)
-
-
-

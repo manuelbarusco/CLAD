@@ -31,11 +31,11 @@ normalize_transforms = {  "mvtec": transforms.Normalize(**normalazition_paramete
 MVTEC_CLASS_NAMES = ['hazelnut', 'bottle', 'cable','capsule', 'metal_nut', 'pill', 'toothbrush', 'transistor', 'zipper', 'screw']
 BMAD_CLASS_NAMES = [
     "Brain_AD", 
+    "Liver_AD", 
+    "Retina_RESC_AD",
     "Chest_AD", 
     "Histopathology_AD", 
-    "Liver_AD", 
     "Retina_OCT2017_AD", 
-    "Retina_RESC_AD"
 ]
 labels_datasets = { "mvtec":MVTEC_CLASS_NAMES, "bmad" : BMAD_CLASS_NAMES }
 

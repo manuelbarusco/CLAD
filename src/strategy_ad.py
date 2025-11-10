@@ -1,4 +1,4 @@
-import numpy as np 
+import numpy as np
 import gc
 import torch
 from torch.utils.data import DataLoader
@@ -75,7 +75,7 @@ class EarlyStopping():
     Attributes:
        param patience: how many epochs to wait before stopping when loss is not improving
        param min_delta: minimum difference between new loss and old loss for new loss to be considered as an improvement
-     
+
     """
     def __init__(self, patience=5, min_delta=0):
         self.patience = patience
@@ -96,8 +96,8 @@ class EarlyStopping():
             print(f"INFO: Early stopping counter {self.counter} of {self.patience}")
             if self.counter >= self.patience:
                 print('INFO: Early stopping')
-                self.early_stop = True          
- 
+                self.early_stop = True
+
 def create_trainer(strategy,parameters,device,input_size,lr,batch_size):
     num_tasks, latent_dim, num_epochs, batch_size, lr, task_order, sample_strategy, beta, dataset_name= utility_logging.return_values_from_parameters(parameters)
 
@@ -107,12 +107,12 @@ def create_trainer(strategy,parameters,device,input_size,lr,batch_size):
     loss_function = create_loss_function(parameters,criterion_type,input_size, beta)
 
     from argparse import Namespace
-    opt = utility_logging.from_parameters_to_opt(parameters)  
-    
+    opt = utility_logging.from_parameters_to_opt(parameters)
+
     # ARCHITECTURE
-    if "architecture" in parameters: 
+    if "architecture" in parameters:
         architecture = parameters["architecture"]
-    else: 
+    else:
         architecture = "vae"
 
     print(architecture)
@@ -131,36 +131,36 @@ def create_trainer(strategy,parameters,device,input_size,lr,batch_size):
         #Added
     elif architecture == "cfa":
         cfa, device = create_cfa(strategy,input_size, parameters)
-        trainer = Trainer_cfa(strategy,cfa)   
+        trainer = Trainer_cfa(strategy,cfa)
 
         #Added
     elif architecture == "patchcore":
         patch, device = create_patchcore(strategy,input_size, parameters)
-        trainer = Trainer_patchcore(strategy,patch)   
+        trainer = Trainer_patchcore(strategy,patch)
 
         #Added
     elif architecture == "padim":
         padim, device = create_padim(strategy,input_size, parameters)
-        trainer = Trainer_padim(strategy,padim)   
+        trainer = Trainer_padim(strategy,padim)
 
         #Added
     elif architecture == "draem":
         draem, device = create_draem(strategy,input_size, parameters)
-        trainer = Trainer_draem(strategy,draem)   
+        trainer = Trainer_draem(strategy,draem)
 
         #Added
     elif architecture == "stfpm":
         storig, device = create_stfpm(strategy,input_size, parameters)
-        trainer = Trainer_STFPM(strategy,storig)   
+        trainer = Trainer_STFPM(strategy,storig)
 
         #Added
     elif architecture == "efficientad":
         if parameters["st"] == True:
             st, device = create_st(strategy,input_size, parameters)
-            trainer = Trainer_st(strategy,st)  
+            trainer = Trainer_st(strategy,st)
         else:
             eff, device = create_efficientad(strategy,input_size, parameters)
-            trainer = Trainer_efficientad(strategy,eff)  
+            trainer = Trainer_efficientad(strategy,eff)
 
     elif architecture=="pix2pix":
         trainer_param = parameters["trainer"]
@@ -228,7 +228,7 @@ def reset_trainer(strategy):
         strategy.trainer.optimizer = None
         #added
         strategy.trainer.scheduler = None
-        
+
         strategy.trainer.ad_model.loss_l2 = None
         strategy.trainer.ad_model.loss_ssim = None
         strategy.trainer.ad_model.loss_focal = None
@@ -261,12 +261,12 @@ def create_strategy(parameters,run,labels_map,device,path_logs,input_size):
     loss_function = create_loss_function(parameters,criterion_type,input_size, beta)
 
     from argparse import Namespace
-    opt = utility_logging.from_parameters_to_opt(parameters)    
+    opt = utility_logging.from_parameters_to_opt(parameters)
 
-    # CREATE STRATEGY    
+    # CREATE STRATEGY
     strategy = Strategy_CL_AD(parameters,None, num_tasks, task_order, num_epochs, labels_map, path_logs, run)
     strategy.device = device
-    
+
     if strategy.parameters['architecture'] == 'cfa':
         strategy.model = wrn50_2(pretrained=True, progress=True)
         strategy.model = strategy.model.to(strategy.device)
@@ -284,10 +284,10 @@ def create_strategy(parameters,run,labels_map,device,path_logs,input_size):
         for param in strategy.model.parameters():
             param.requires_grad = False
         strategy.model = strategy.model.to(strategy.device)
-        strategy.model.eval()  
+        strategy.model.eval()
 
     trainer = create_trainer(strategy,parameters,device,input_size,lr,batch_size)
-    
+
     strategy.trainer = trainer
 
     # other variables
@@ -297,7 +297,7 @@ def create_strategy(parameters,run,labels_map,device,path_logs,input_size):
 
     return strategy
 
-class Strategy_CL_AD: 
+class Strategy_CL_AD:
     '''
     It trains and evaluate the model on a Continual Learning setting.
 
@@ -339,7 +339,7 @@ class Strategy_CL_AD:
         print(f"Length of current dataset: {len(train_dataset)}")
         task_train_dataset = train_dataset
         task_test_dataset = test_dataset
-        
+
         current_train_dataset = task_train_dataset
         current_test_dataset = task_test_dataset
 
@@ -378,9 +378,9 @@ class Strategy_CL_AD:
         epoch_index = self.current_epoch
         epoch = epoch_index
         num_epochs = self.num_epochs
-        metrics[task_index].setdefault(epoch_index, {} ) 
-        other_data[task_index].setdefault(epoch_index, {} ) 
-        
+        metrics[task_index].setdefault(epoch_index, {} )
+        other_data[task_index].setdefault(epoch_index, {} )
+
         metrics_epoch = {  f"{mode}_"+key:metrics_epoch[key] for key in metrics_epoch }
         other_data_epoch = {f"{mode}_"+key:other_data_epoch[key] for key in other_data_epoch  if "x_hats" not in key }
 
@@ -396,7 +396,7 @@ class Strategy_CL_AD:
             else:
                 #self.run[f"Task_Results/T{self.index_training}/epochs/{mode}"][key].log(metrics_epoch[key])
                 self.run.log({f"Task_Results/T{self.index_training}/epochs/{mode}/{key}": metrics_epoch[key]})
-        
+
         dict_print = { key:metrics_epoch[key] for key in metrics_epoch if np.asarray(metrics_epoch[key]).ndim==0 }
 
         if mode=="train":
@@ -408,12 +408,12 @@ class Strategy_CL_AD:
     def training_task(self,current_train_dataset,current_test_dataset,num_epochs,batch_size,eval=True):
         """
         It trains the model on the train dataset
-        """ 
+        """
         #ADDED
         start_time = time.time()
         if self.parameters["architecture"] == "storig" :
             current_train_data_loader = DataLoader(current_train_dataset , batch_size=batch_size, pin_memory      =          True,
-                                    shuffle         =          True)  
+                                    shuffle         =          True)
         else:
             current_train_data_loader = DataLoader(current_train_dataset , batch_size=batch_size, pin_memory      =          True,
                                     shuffle         =          True,
@@ -429,7 +429,7 @@ class Strategy_CL_AD:
         '''
         self.current_train_data_loader = current_train_data_loader
         self.current_test_data_loader = current_test_data_loader
-        
+
         if self.parameters["architecture"] == "efficientad":
             print("Device teacher: " + str(self.trainer.ad_model.device))
             self.trainer.ad_model.teacher.eval()
@@ -441,7 +441,7 @@ class Strategy_CL_AD:
         if self.lr_scheduler:
             print("Lr scheduler used")
             if self.parameters["architecture"] == "cfa":
-                self.trainer.optimizer  = torch.optim.AdamW(params        = self.trainer.ad_model.parameters(), 
+                self.trainer.optimizer  = torch.optim.AdamW(params        = self.trainer.ad_model.parameters(),
                                     lr            = self.lr,
                                     weight_decay  = 5e-4,
                                     amsgrad       = True )
@@ -453,24 +453,24 @@ class Strategy_CL_AD:
         if self.early_stopping:
             print("Early Stopping used")
             early_stopping = EarlyStopping(patience=self.parameters['patience'])
-        
+
 
         if self.parameters["architecture"] == "cfa":
             self.trainer.ad_model._update_centroid(current_train_data_loader,self.model)
 
-        #added    
+        #added
         self.early_stop = False
         self.best_epoch = 0
 
         epoch=0
         losses = []
-        n_critic_eval = self.n_critic_eval 
-        
+        n_critic_eval = self.n_critic_eval
+
         #ADDED
         end_time = time.time()
         add_elapsed_time = end_time - start_time
         self.elapsed_time = self.elapsed_time+add_elapsed_time
-        while(epoch<num_epochs): 
+        while(epoch<num_epochs):
             #ADDED
             start_time = time.time()
             self.current_epoch = epoch
@@ -501,7 +501,7 @@ class Strategy_CL_AD:
                             self.early_stop = True
                             break
 
-            epoch+=1        
+            epoch+=1
 
 
     def evaluate_test_stream(self, test_stream, batch_size):
@@ -512,7 +512,7 @@ class Strategy_CL_AD:
         from src.utilities.utility_main import give_memory_parameters,give_ad_parameters
         use_memory,memory_dataset_path_train,memory_dataset_path_test,type_memory_train,type_memory_test,memory_model_path,new_memory,sample_strategy = give_memory_parameters(self.parameters)
         anomaly_detection_task,anomaly_detection_task_with_metrics,test_only_seen_tasks,num_tasks_to_examine = give_ad_parameters(self.parameters,index_training)
-        
+
         #loading in case of early stopping EFF
         if self.early_stop == True and self.parameters['architecture'] == "efficientad" and self.parameters['st'] == False:
             run_name1 = 'model_student'+str(self.best_epoch)
@@ -524,8 +524,8 @@ class Strategy_CL_AD:
 
             self.trainer.ad_model.student.eval()
             self.trainer.ad_model.autoencoder.eval()
-            
-        #loading in case of early stopping ST 
+
+        #loading in case of early stopping ST
         if self.early_stop == True and self.parameters['architecture'] == "efficientad" and self.parameters['st'] == True:
             run_name1 = 'model_student'+str(self.best_epoch)
             #self.trainer.ad_model.model.load_state_dict(torch.load(os.path.join(self.checkpoints, run_name1 + ".pckl"), map_location='cuda:0'))
@@ -542,7 +542,7 @@ class Strategy_CL_AD:
 
 
         diz_test,other_data,lista_metriche  = {}, {}, {}
-        for test_task_index in range(num_tasks_to_examine): 
+        for test_task_index in range(num_tasks_to_examine):
             if self.test_all_dataset_together:
                 test_task_index = index_training
 
@@ -565,7 +565,7 @@ class Strategy_CL_AD:
             self.mode = "evaluate_data"
             if anomaly_detection_task and anomaly_detection_task_with_metrics:
                 #addde "cfa"
-                if architecture_name not in ["fastflow", "cfa", "efficientad", "patchcore", "padim", "draem","storig"] and trainer_name!="pix2pix_inpaint" and trainer_name!="classification":
+                if architecture_name not in ["fastflow", "cfa", "efficientad", "patchcore", "padim", "draem","storig", "stfpm"] and trainer_name!="pix2pix_inpaint" and trainer_name!="classification":
                     print("reconstruct_epoch_with_evaluation_ad")
                     diz = reconstruct_epoch_with_evaluation_ad(self, self.parameters, test_data_loader, self.complete_test_dataset,class_name,self.index_training,test_task_index,self.run,self.path_logs)
                     metrics_epoch, other_data_epoch = diz, {}
@@ -601,7 +601,7 @@ class Strategy_CL_AD:
             for key in lista_metriche:
                 save_summary_value(self,run,lista_metriche,index_training,key)
 
-        for test_task_index in range(num_tasks_to_examine):   
+        for test_task_index in range(num_tasks_to_examine):
             if self.test_all_dataset_together:
                 loss = self.metrics_test[self.index_training][index_training]["loss"]
             else:

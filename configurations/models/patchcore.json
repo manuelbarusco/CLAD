@@ -10,7 +10,7 @@
     "batch_size": 1,
     "lr": 1e-3,
     "b1": 0.5,
-    "b2": 0.999, 
+    "b2": 0.999,
     "weight_decay": 5e-4,
 
     "criterion_type":"mse",
@@ -30,7 +30,7 @@
     "f_coreset": 0.1,
     "backbone_name": "wide_resnet50_2",
     "coreset_eps": 0.9,
-    "cl":true,
+    "cl":false,
     "mem_size_cl":30000
-    
+
 }

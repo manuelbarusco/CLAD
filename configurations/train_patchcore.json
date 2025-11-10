@@ -10,7 +10,7 @@
     "save_embedding":false,
 
     "new_memory":true,
-    "sample_strategy":"cl",  
+    "sample_strategy":"multi_task",
 
     "device_id":0,
     "num_epochs":1,

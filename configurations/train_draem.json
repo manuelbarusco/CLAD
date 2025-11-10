@@ -1,15 +1,14 @@
 {
     "architecture":"draem",
     "trainer":"draem",
-    "mem_size":40,
-
+    "mem_size":300,
 
     "anomaly_detection_task":true,
     "anomaly_detection_task_with_metrics":true,
     "produce_visual_debug":false,
     "save_embedding":false,
     "new_memory":true,
-    "sample_strategy":"replay",  
+    "sample_strategy":"replay",
 
     "device_id":0,
     "num_epochs":50,
@@ -26,4 +25,3 @@
     "test_all_dataset_together":false
 
 }
-

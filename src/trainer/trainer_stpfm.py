@@ -14,7 +14,7 @@ from src.utilities.utility_pix2pix import create_summary,create_summary_by_numpy
 
 #Added for stfpm
 from src.models.cfa_add.metric import *
-from src.models.cfa_add.visualizer import * 
+from src.models.cfa_add.visualizer import *
 from adcl_paper.src.models.stfpm import *
 from src.models.stfpm_add.loss import *
 from torch import Tensor
@@ -46,7 +46,7 @@ Args:
 Returns:
     Loss value
 """
-   
+
 
 class Trainer_STFPM():
     def __init__(self,strategy, st):
@@ -58,19 +58,19 @@ class Trainer_STFPM():
 
         self.optimizer = torch.optim.SGD(
             params=self.ad_model.student.parameters(),
-            lr=0.4, 
+            lr=0.4,
             momentum=0.9,
             weight_decay=0.0001,
         )
         self.loss_fcn = STFPMLoss()
         #self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=int(0.95 * strategy.parameters['num_epochs']), gamma=0.1)
-    
+
 
     def train_epoch(self,dataloader):
         self.ad_model.training = True
         l_fastflow_loss = 0.0
         dataSize = len(dataloader.dataset)
-        lista_indices = [] 
+        lista_indices = []
         self.ad_model.teacher.eval()
         self.ad_model.student.train()
 
@@ -92,7 +92,7 @@ class Trainer_STFPM():
             loss.backward()
             self.optimizer.step()
             l_fastflow_loss += loss.item() * batch_size
-            #self.scheduler.step()            
+            #self.scheduler.step()
             batch_index += 1
 
         '''
@@ -101,19 +101,19 @@ class Trainer_STFPM():
         torch.save(self.ad_model.student, os.path.join(self.strategy.train_output_dir,
                                             'student_tmp.pth'))
         '''
-        
+
         if self.strategy.parameters['early_stopping'] == True:
             run_name1 = 'model_student'+str(self.strategy.current_epoch)
             torch.save(self.ad_model.student.state_dict(), os.path.join(self.strategy.checkpoints, run_name1 + ".pckl"))
-        
-        
+
+
         l_fastflow_loss /= dataSize
         lista_indices = np.asarray(lista_indices)
 
         metrics_epoch = {"loss":l_fastflow_loss}
         other_data_epoch = {"indices":lista_indices}
-        
-        return metrics_epoch,other_data_epoch   
+
+        return metrics_epoch,other_data_epoch
 
 
 
@@ -132,7 +132,7 @@ class Trainer_STFPM():
             masks = []
             data,indices,anomaly_info= batch[0],batch[2],batch[3]
             class_ids = batch[1]
-            lista_indices.extend(batch[2].detach().cpu().numpy()) 
+            lista_indices.extend(batch[2].detach().cpu().numpy())
             data = data.to(self.ad_model.device)
 
             with torch.no_grad():
@@ -140,13 +140,13 @@ class Trainer_STFPM():
 
             heatmap = anomaly_maps[:, 0].detach().cpu().numpy()
             #print(f"Heatmap size: {heatmap.shape}")
-            #heatmap = torch.mean(heatmap, dim=1) 
+            #heatmap = torch.mean(heatmap, dim=1)
             l_anomaly_maps.extend(heatmap)
 
 
             #lista_labels.extend(class_ids)
             lista_labels.extend(class_ids.detach().cpu().numpy())
-            
+
             for i,idx in enumerate(indices):
                 mask_path = dataset.mask[idx]
                 mask = dataset.get_mask(mask_path, anomaly_info[i])
@@ -161,7 +161,7 @@ class Trainer_STFPM():
 
         #heatmaps = upsample(heatmaps, size=data.size(2), mode='bilinear')
         #heatmaps = gaussian_smooth(heatmaps, sigma=4)
-    
+
         ###gt_mask = np.asarray(gt_mask_list)
         #scores = rescale(heatmaps)
 
@@ -171,16 +171,16 @@ class Trainer_STFPM():
         diz_metriche = test_epoch_anomaly_maps(l_anomaly_maps,gt_mask_list, gt_list, self.strategy.index_training, self.strategy.run, self.strategy.labels_map[self.strategy.index_training],self.strategy.index_training,self.strategy.path_logs)
         diz_metriche["loss"] = 1-diz_metriche["per_pixel_rocauc"]
         threshold = diz_metriche["threshold"]
-        
+
         mode = self.strategy.trainer.mode if hasattr(self.strategy.trainer, 'mode') else "reconstruct"
-        
+
         metrics_epoch = diz_metriche
         other_data_epoch = {}
 
-        
+
         return metrics_epoch, other_data_epoch
 
-    def evaluate_data(self, dataloader,test_loss_function=None):  
+    def evaluate_data(self, dataloader,test_loss_function=None):
         dataset = self.strategy.complete_test_dataset
         test_task_index = self.strategy.current_test_task_index
         index_training = self.strategy.index_training
@@ -196,7 +196,7 @@ class Trainer_STFPM():
             masks = []
             data,indices,anomaly_info= batch[0],batch[2],batch[3]
             class_ids = batch[1]
-            lista_indices.extend(batch[2].detach().cpu().numpy()) 
+            lista_indices.extend(batch[2].detach().cpu().numpy())
             data = data.to(self.ad_model.device)
 
             with torch.no_grad():
@@ -204,14 +204,15 @@ class Trainer_STFPM():
 
             heatmap = anomaly_maps[:, 0].detach().cpu().numpy()
             #print(f"Heatmap size: {heatmap.shape}")
-            #heatmap = torch.mean(heatmap, dim=1) 
+            #heatmap = torch.mean(heatmap, dim=1)
             l_anomaly_maps.extend(heatmap)
-            
+
             lista_labels.extend(class_ids.detach().cpu().numpy())
-            
+
             for i,idx in enumerate(indices):
                 mask_path = dataset.mask[idx]
                 mask = dataset.get_mask(mask_path, anomaly_info[i])
+                print(mask.shape)
                 masks.append(mask)
             mask = torch.stack(masks)
             test_imgs.extend(data.detach().cpu().numpy())
@@ -221,7 +222,7 @@ class Trainer_STFPM():
 
         #heatmaps = upsample(heatmaps, size=data.size(2), mode='bilinear')
         #heatmaps = gaussian_smooth(heatmaps, sigma=4)
-    
+
         ###gt_mask = np.asarray(gt_mask_list)
         #scores = rescale(heatmaps)
 
@@ -235,10 +236,7 @@ class Trainer_STFPM():
         #added
         if self.strategy.index_training == 9:
             plot_predict(self, lista_labels, l_anomaly_maps, gt_mask_list, lista_indices, threshold, test_imgs)
-                  
+
         metrics_epoch = diz_metriche
         other_data_epoch = {}
         return metrics_epoch, other_data_epoch
-    
-
-

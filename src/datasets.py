@@ -1,6 +1,6 @@
 from re import X
 import numpy as np
-import os 
+import os
 import pickle
 
 import torch
@@ -30,12 +30,12 @@ transform_ae = transforms.RandomChoice([
 normalize_transforms = {  "mvtec": transforms.Normalize(**normalazition_parameters_mvtec), "bmad": transforms.Normalize(**normalazition_parameters_mvtec)   }
 MVTEC_CLASS_NAMES = ['hazelnut', 'bottle', 'cable','capsule', 'metal_nut', 'pill', 'toothbrush', 'transistor', 'zipper', 'screw']
 BMAD_CLASS_NAMES = [
-    "Brain_AD", 
-    "Liver_AD", 
+    "Brain_AD",
+    "Liver_AD",
     "Retina_RESC_AD",
-    "Chest_AD", 
-    "Histopathology_AD", 
-    "Retina_OCT2017_AD", 
+    "Chest_AD",
+    "Histopathology_AD",
+    "Retina_OCT2017_AD",
 ]
 labels_datasets = { "mvtec":MVTEC_CLASS_NAMES, "bmad" : BMAD_CLASS_NAMES }
 
@@ -53,9 +53,9 @@ def create_transform_img(img_size, crp_size):
 
     transform.append(transforms.ToTensor())
     transform.append(transforms.Normalize(**normalazition_parameters_mvtec))
-    return transforms.Compose(transform)    
+    return transforms.Compose(transform)
 
-def filter_dataset(dataset, task_id, batch_size): 
+def filter_dataset(dataset, task_id, batch_size):
     """
     This methods extract from the entire dataset in input the data corresponding to specific task(s)
 
@@ -63,7 +63,7 @@ def filter_dataset(dataset, task_id, batch_size):
         dataset (torch.Dataset) : dataset to be considered
         task_id (int) : id of the task
         batch_size (int) : batch size
-    
+
     Return:
         class_subset (torch.Subset) : subset of the dataset
         class_dataloader (torch.DataLoader) : dataloader over the subset
@@ -72,7 +72,7 @@ def filter_dataset(dataset, task_id, batch_size):
         class_idx = np.where((dataset.targets==task_id))[0]
     else:
         class_idx = np.where( np.isin(dataset.targets,task_id) )[0]
-        
+
     class_subset = Subset(dataset, class_idx)
     class_loader = DataLoader(class_subset, shuffle=True, batch_size=batch_size, drop_last=True)
     #class_loader = DataLoader(class_subset, shuffle=True, batch_size=batch_size)
@@ -83,16 +83,16 @@ def create_transform_x(opt,crp_size): #prepares images as inputs for backbone
     transform = []
     if opt.img_size == opt.crp_size:
         transform.append(transforms.Resize((opt.img_size, opt.img_size), interpolation=2))
-    else: 
+    else:
         transform.append(transforms.Resize(opt.img_size, Image.ANTIALIAS))
         transform.append(transforms.CenterCrop(crp_size))
 
     if opt.gray == True:
         gray_transform = transforms.Grayscale(num_output_channels=3)
-        transform.append(gray_transform)  
+        transform.append(gray_transform)
     transform.append(transforms.ToTensor())
     transform.append(transforms.Normalize(**normalazition_parameters_mvtec))
-    return transforms.Compose(transform)    
+    return transforms.Compose(transform)
 
 def create_transform_x_with_rotation(opt,crp_size,rotation_degree,fill=0):#the same as above, but with rotation
     transform = []
@@ -119,27 +119,27 @@ def load_dataset(parameters,type_dataset,normalize=True):
         dataset_train (MVTecDataset) : training MVTec Dataset
         dataset_test (MVTecDataset) : test MVTec Dataset
     """
-    
+
     print(f"Type of Dataset: {type_dataset}")
 
     dataset_name = type_dataset.lower()
     transform_list = [transforms.ToTensor()]
     if normalize:
         transform_list+= [normalize_transforms[type_dataset]]
-    train_transform = transforms.Compose(transform_list)    
+    train_transform = transforms.Compose(transform_list)
 
     filepath = f"{parameters['data_path']}"#not relevant
     print(f"filepath dataset: {filepath}")#not relevant
 
     if type_dataset=="mvtec":
-        opt = utility_logging.from_parameters_to_opt(parameters)  
+        opt = utility_logging.from_parameters_to_opt(parameters)
         apply_rotation=parameters.get("apply_rotation",False)
         opt.apply_rotation=apply_rotation
         dataset_train = MVTecDataset(opt, is_train=True)#entire train dataset
         opt.apply_rotation=False
         dataset_test = MVTecDataset(opt,is_train=False)#entire test dataset
     elif type_dataset=="bmad":
-        opt = utility_logging.from_parameters_to_opt(parameters)  
+        opt = utility_logging.from_parameters_to_opt(parameters)
         apply_rotation=parameters.get("apply_rotation",False)
         opt.apply_rotation=apply_rotation
         dataset_train = BMADDataset(opt, is_train=True)#entire train dataset
@@ -169,11 +169,11 @@ Import mvtec dataset
 ...
 
 '''
-        
+
 
 class MVTecDataset(Dataset):
     '''
-    Import MVTecDataset with all the classes containing objects  
+    Import MVTecDataset with all the classes containing objects
     '''
     def __init__(self, opt,is_train=True):
         assert opt.class_name in MVTEC_CLASS_NAMES, 'class_name: {}, should be in {}'.format(opt.class_name, MVTEC_CLASS_NAMES)
@@ -197,20 +197,20 @@ class MVTecDataset(Dataset):
             self.x, self.y, self.anomaly_info, self.mask, self.filepaths = self.load_dataset_folders()
         else:
             self.x, self.y, self.anomaly_info, self.mask, self.filepaths = self.load_dataset_folder()
-        '''  
+        '''
         # mask
         if self.cropsize != self.opt.img_size:
             self.transform_mask = transforms.Compose([transforms.Resize(self.opt.img_size, Image.NEAREST), transforms.CenterCrop(self.cropsize), transforms.ToTensor()])
         else:
             self.transform_mask = transforms.Compose([transforms.Resize(self.opt.img_size, Image.NEAREST), transforms.ToTensor()])
-        '''  
+        '''
         rgb_dict = { "white":(255,255,255),"blue":(80,116,151),"brown":(164,115,93),"black":(0,0,0),"gray":(190,190,190)  }
         colors = ["white","blue","gray","black","black","black","gray","black","brown","white"]
         rgb_colors = [ rgb_dict[color_class] for color_class in colors ]
         self.rgb_colors = rgb_colors
 
         new_x,new_y,new_anomaly_info,new_mask,new_filepaths = [],[],[],[],[]
-        
+
         self.y = np.asarray(self.y)
         self.targets = np.asarray(self.y)#dataset.targets
         self.anomaly_info = np.asarray(self.anomaly_info)
@@ -246,7 +246,7 @@ class MVTecDataset(Dataset):
                               self.augmenters[aug_ind[2]]]
                              )
         return aug
-    
+
     def augment_image(self, image, anomaly_source_path):
         aug = self.randAugmenter()
         perlin_scale = 6
@@ -315,7 +315,7 @@ class MVTecDataset(Dataset):
 
     def __getitem__(self, idx):#fcn built in MVTecDataset class to open the image from filepath and extract its info
         x, y,anomaly_info, mask,filepath = self.x[idx], self.y[idx],self.anomaly_info[idx], self.mask[idx], self.filepaths[idx]
-        
+
         if self.architecture != "draem":
             try:
                 #x = Image.open(x)
@@ -327,10 +327,10 @@ class MVTecDataset(Dataset):
             if self.apply_rotation:
                 rotation_degree = self.rotation_degrees[idx]
                 fill = self.rgb_colors[y]
-                transform_img = create_transform_x_with_rotation(self.opt,crp_size,rotation_degree,fill)     
+                transform_img = create_transform_x_with_rotation(self.opt,crp_size,rotation_degree,fill)
             else:
                 transform_img = create_transform_x(self.opt,crp_size)
-            
+
 
         class_name = MVTEC_CLASS_NAMES[y]
         '''
@@ -340,16 +340,16 @@ class MVTecDataset(Dataset):
                 x = np.concatenate([x, x, x], axis=2)
             x = Image.fromarray(x.astype('uint8')).convert('RGB')
         '''
-        
+
         '''
         if anomaly_info == 0:
             mask = torch.zeros([1, self.cropsize, self.cropsize])
         else:
             mask = Image.open(mask)
             mask = self.transform_mask(mask)
-        '''  
-        
-        if self.architecture == 'efficientad':  
+        '''
+
+        if self.architecture == 'efficientad':
             x = torch.cat([torch.unsqueeze(transform_img(x),dim=0), torch.unsqueeze(transform_img(transform_ae(x)),dim=0)])
             return x, y, idx, anomaly_info, filepath
         elif self.architecture == 'draem':
@@ -366,12 +366,12 @@ class MVTecDataset(Dataset):
         else:
             x = transform_img(x)
             return x, y, idx, anomaly_info, filepath
-        
-        
+
+
     def get_wrapper(self,idx):
         x, y, idx, anomaly_info, filepath  = self.__getitem__(idx)
         mask = self.mask[idx]
-        diz = {"x":x, "y":y, "idx":idx, "anomaly_info":anomaly_info,"mask":mask, 
+        diz = {"x":x, "y":y, "idx":idx, "anomaly_info":anomaly_info,"mask":mask,
               "filepath":filepath, "real_A":x}
         from argparse import Namespace
         ns = Namespace(**diz)
@@ -388,7 +388,7 @@ class MVTecDataset(Dataset):
         else:
             mask = Image.open(mask_path)
             mask = self.transform_mask(mask)
-        return mask 
+        return mask
 
 
     def __len__(self):
@@ -396,13 +396,13 @@ class MVTecDataset(Dataset):
 
     def load_dataset_folders(self): #exclusively when one needs to load all classes
         lista_x,lista_y,lista_anomaly_info,lista_mask,lista_filepaths = [],[],[],[],[]
-        for class_name in MVTEC_CLASS_NAMES: #class_name is string while class_idx ranges from 0 to 9 
+        for class_name in MVTEC_CLASS_NAMES: #class_name is string while class_idx ranges from 0 to 9
             self.class_name = class_name
             x, y, anomaly_info,mask,filepaths = self.load_dataset_folder()
             lista_x.extend(x)
             lista_y.extend(y)
             lista_anomaly_info.extend(anomaly_info)
-            lista_mask.extend(mask) 
+            lista_mask.extend(mask)
             lista_filepaths.extend(filepaths)
         return lista_x,lista_y,lista_anomaly_info,lista_mask,lista_filepaths
 
@@ -450,13 +450,13 @@ class MVTecDataset(Dataset):
 
         assert len(x) == len(y), 'number of x and y should be same'
 
-        return list(x), list(y), list(anomaly_info), list(mask), list(filepaths) 
+        return list(x), list(y), list(anomaly_info), list(mask), list(filepaths)
 
 def natural_sort_key(s):
     import re
     """
     Questa funzione implementa l'ordinamento human sorting, utile per caricare e ordinare le immagini di bmad :
-    ad es.: 
+    ad es.:
         files = ["img10.png", "img1.png", "img2.png", "img20.png", "IMG11.png"]
 
         ordinamento con sorted (standard): ['IMG11.png', 'img1.png', 'img10.png', 'img2.png', 'img20.png']
@@ -472,11 +472,11 @@ class BMADDataset(Dataset):
 
     def __init__(self, opt, is_train=True):
         assert opt.class_name in BMAD_CLASS_NAMES, f"Class {opt.class_name} not supported. It must be one of: {BMAD_CLASS_NAMES}"
-        
+
         self.opt = opt
         self.dataset_path = opt.data_path #path/to/bmad i.e, ./data/bmad
         self.class_name = opt.class_name  #class we want to handle i.e Brain, Liver, Retina, ...
-        self.is_train = is_train          
+        self.is_train = is_train
         self.cropsize = opt.crp_size
         self.use_all_classes = opt.use_all_classes #default True
         self.only_normal = opt.only_normal
@@ -486,7 +486,7 @@ class BMADDataset(Dataset):
 
         #path/to/synthetic_anomalies for draem
         self.anomaly_source_paths = opt.anomaly_source_paths
-         
+
         if self.only_normal is True and self.only_anomalies is True:
             raise ValueError("`only_normal=True` and `only_anomalies=True` cannot raise both true")
 
@@ -494,15 +494,15 @@ class BMADDataset(Dataset):
             self.x, self.y, self.anomaly_info, self.mask, self.filepaths = self.load_dataset_folders()
         else:
             self.x, self.y, self.anomaly_info, self.mask, self.filepaths = self.load_dataset_folder()
-        
+
         rgb_dict = { "white":(255,255,255),"blue":(80,116,151),"brown":(164,115,93),"black":(0,0,0),"gray":(190,190,190)  }
         colors = ["white","blue","gray","black","black","black","gray","black","brown","white"]
         rgb_colors = [ rgb_dict[color_class] for color_class in colors ]
         self.rgb_colors = rgb_colors
 
-        
+
         new_x,new_y,new_anomaly_info,new_mask,new_filepaths = [],[],[],[],[]
-        
+
         self.y = np.asarray(self.y)
         self.targets = np.asarray(self.y)#dataset.targets
         self.anomaly_info = np.asarray(self.anomaly_info)
@@ -510,7 +510,7 @@ class BMADDataset(Dataset):
 
         #self.anomaly_source_paths = ""
         #self.augmenters = []
-        #self.rot = None 
+        #self.rot = None
 
         #if architecture is DRAEM prepare param for augmentation
         if self.architecture == "draem":
@@ -529,8 +529,8 @@ class BMADDataset(Dataset):
             ]
 
             self.rot = iaa.Sequential([iaa.Affine(rotate=(-90, 90))])
-            
-           
+
+
     #choose randomly three main augm techniques from self.augmenters
     def randAugmenter(self):
        aug_ind = np.random.choice(np.arange(len(self.augmenters)), 3, replace=False)
@@ -539,8 +539,8 @@ class BMADDataset(Dataset):
                              self.augmenters[aug_ind[2]]]
                             )
        return aug
-    
-        
+
+
     def augment_image(self, image, anomaly_source_path):
         aug = self.randAugmenter()
         perlin_scale = 6
@@ -578,8 +578,8 @@ class BMADDataset(Dataset):
             if np.sum(msk) == 0:
                 has_anomaly=0.0
             return augmented_image, msk, np.array([has_anomaly],dtype=np.float32)
-            
-                      
+
+
     def transform_image_draem_test(self, image_path):
         image = cv2.imread(image_path, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -591,8 +591,8 @@ class BMADDataset(Dataset):
         image = np.array(image).reshape((image.shape[0], image.shape[1], 3)).astype(np.float32)
         image = np.transpose(image, (2, 0, 1))
         return image
-        
-       
+
+
     def transform_image_draem(self, image_path, anomaly_source_path):
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -608,42 +608,53 @@ class BMADDataset(Dataset):
         image = np.transpose(image, (2, 0, 1))
         anomaly_mask = np.transpose(anomaly_mask, (2, 0, 1))
         return image, augmented_image, anomaly_mask, has_anomaly
-       
-      
+
+
     def get_wrapper(self,idx):
         x, y, idx, anomaly_info, filepath  = self.__getitem__(idx)
         mask = self.mask[idx]
-        diz = {"x":x, "y":y, "idx":idx, "anomaly_info":anomaly_info,"mask":mask, 
+        diz = {"x":x, "y":y, "idx":idx, "anomaly_info":anomaly_info,"mask":mask,
               "filepath":filepath, "real_A":x}
         from argparse import Namespace
         ns = Namespace(**diz)
         return ns
-        
-        
+
+
     def get_mask(self,mask_path,anomaly_info):
         if self.cropsize != self.opt.img_size:
-            self.transform_mask = transforms.Compose([transforms.Resize(self.opt.img_size, Image.NEAREST), transforms.CenterCrop(self.cropsize), transforms.ToTensor()])
+            self.transform_mask = transforms.Compose([
+                transforms.Resize((self.opt.img_size, self.opt.img_size), Image.NEAREST),  # forza resize quadrato
+                transforms.CenterCrop(self.cropsize),
+                transforms.ToTensor()
+            ])
         else:
-            self.transform_mask = transforms.Compose([transforms.Resize(self.opt.img_size, Image.NEAREST), transforms.ToTensor()])
+            self.transform_mask = transforms.Compose([
+                transforms.Resize((self.opt.img_size, self.opt.img_size), Image.NEAREST),  # anche qui resize quadrato
+                transforms.CenterCrop(self.cropsize),  # aggiunto per sicurezza
+                transforms.ToTensor()
+            ])
 
         if anomaly_info == 0:
             mask = torch.zeros([1, self.cropsize, self.cropsize])
-        elif mask_path == None:
+            return mask
+
+        if mask_path == None:
             mask = torch.zeros([1, self.cropsize, self.cropsize]) if np.random.rand() > 0.5 else torch.ones([1, self.cropsize, self.cropsize])
-        else:
-            mask = Image.open(mask_path).convert("L")
-            mask = self.transform_mask(mask)
-    
+            return mask
+
+        mask = Image.open(mask_path).convert("L")
+        mask = self.transform_mask(mask)
+
         mask = (mask > 0.0).long()    #aggiunto in videochiamata
-        return mask 
-    
+        return mask
+
     def load_dataset_folders(self):
         lista_x, lista_y, lista_anomaly_info, lista_mask, lista_filepaths = [], [], [], [], []
 
         for class_name in BMAD_CLASS_NAMES:
             self.class_name = class_name
             x, y, anomaly_info, mask, filepaths = self.load_dataset_folder()
-            max_samples = min(2000, len(x)) 
+            max_samples = min(2000, len(x))
 
             # sample max_len samples for memory issues
             indices = np.random.choice(len(x), max_samples, replace=False)
@@ -679,7 +690,7 @@ class BMADDataset(Dataset):
                 continue
             img_fpath_list = sorted([os.path.join(img_type_dir, f).replace('\\','/')
                                      for f in os.listdir(img_type_dir)
-                                     if f.endswith('.png') or f.endswith('.jpeg')], 
+                                     if f.endswith('.png') or f.endswith('.jpeg')],
                                      key = natural_sort_key)
 
             # load gt labels
@@ -692,7 +703,7 @@ class BMADDataset(Dataset):
                     filepaths.extend(img_fpath_list) # same as x
             else:
                 if self.only_normal is False:
-                    #controlla se la categoria ha le ground_truth 
+                    #controlla se la categoria ha le ground_truth
                     if len(os.listdir(gt_dir)) != 0:
                         anomaly_info.extend([1] * len(img_fpath_list))
                         img_fname_list = [os.path.splitext(os.path.basename(f)) for f in img_fpath_list]
@@ -711,7 +722,7 @@ class BMADDataset(Dataset):
 
         assert len(x) == len(y), 'number of x and y should be same'
 
-        return list(x), list(y), list(anomaly_info), list(mask), list(filepaths) 
+        return list(x), list(y), list(anomaly_info), list(mask), list(filepaths)
 
 
     def __len__(self):
@@ -722,7 +733,7 @@ class BMADDataset(Dataset):
         Restituisce immagine, etichetta, maschera, anomalia_info e file path.
         """
         x, y,anomaly_info, mask,filepath = self.x[idx], self.y[idx],self.anomaly_info[idx], self.mask[idx], self.filepaths[idx]
-        
+
         if self.architecture != "draem":
             try:
                #x = Image.open(x)
@@ -734,10 +745,10 @@ class BMADDataset(Dataset):
             if self.apply_rotation:
                 rotation_degree = self.rotation_degrees[idx]
                 fill = self.rgb_colors[y]
-                transform_img = create_transform_x_with_rotation(self.opt,crp_size,rotation_degree,fill)     
+                transform_img = create_transform_x_with_rotation(self.opt,crp_size,rotation_degree,fill)
             else:
                 transform_img = create_transform_x(self.opt,crp_size)
-            
+
 
         class_name = BMAD_CLASS_NAMES[y]
         '''
@@ -747,16 +758,16 @@ class BMADDataset(Dataset):
                 x = np.concatenate([x, x, x], axis=2)
             x = Image.fromarray(x.astype('uint8')).convert('RGB')
         '''
-        
+
         '''
         if anomaly_info == 0:
             mask = torch.zeros([1, self.cropsize, self.cropsize])
         else:
             mask = Image.open(mask)
             mask = self.transform_mask(mask)
-        '''  
-        
-        if self.architecture == 'efficientad':  
+        '''
+
+        if self.architecture == 'efficientad':
             x = torch.cat([torch.unsqueeze(transform_img(x),dim=0), torch.unsqueeze(transform_img(transform_ae(x)),dim=0)])
             return x, y, idx, anomaly_info, filepath
         elif self.architecture == 'draem':
@@ -773,8 +784,8 @@ class BMADDataset(Dataset):
         else:
             x = transform_img(x)
             return x, y, idx, anomaly_info, filepath
-        
-    
+
+
     def create_transform(self, opt, crp_size):
         """
         Crea le trasformazioni predefinite per le immagini.
@@ -789,12 +800,12 @@ class BMADDataset(Dataset):
 
 class MemoryDataset(Dataset):
     def __init__(self, filepaths, strategy): #, dataset_current_task
-    
+
         self.strategy = strategy
 
         self.filepaths = filepaths
 
-        filepaths_dict = [ filepath_dict for filepath_dict,filepath_img in filepaths]#filepath_dict,filepath_img: list of .pickles and .pngs for samples stored in memory 
+        filepaths_dict = [ filepath_dict for filepath_dict,filepath_img in filepaths]#filepath_dict,filepath_img: list of .pickles and .pngs for samples stored in memory
         #corresponding to one class only, that will be replayed in CL setting for current task
         indices_original,filepaths_original,class_ids = [],[],[]
         for filepath_dict in filepaths_dict:
@@ -831,7 +842,7 @@ class MemoryDataset(Dataset):
 
     def __len__(self):
         return len(self.filepaths)
-    
+
 
     #for DRAEM
     def randAugmenter(self):
@@ -841,7 +852,7 @@ class MemoryDataset(Dataset):
                               self.augmenters[aug_ind[2]]]
                              )
         return aug
-    
+
     def augment_image(self, image, anomaly_source_path):
         aug = self.randAugmenter()
         perlin_scale = 6
@@ -899,7 +910,7 @@ class MemoryDataset(Dataset):
 
 
 
-    def __getitem__(self, idx):#get item by using idx under which it's saved 
+    def __getitem__(self, idx):#get item by using idx under which it's saved
         filepath_dict,filepath_img = self.filepaths[idx] #filepaths = list of tuples (pickle, img_path)
 
         f = open(filepath_dict, "rb")
@@ -912,15 +923,15 @@ class MemoryDataset(Dataset):
         if self.strategy.parameters["architecture"] != "draem":
             #img = Image.open(filepath_img)
             img = Image.open(filepath_img).convert('RGB')
-        
-        img_size = self.strategy.parameters['img_size']   
-        crp_size = self.strategy.parameters['crp_size']          
+
+        img_size = self.strategy.parameters['img_size']
+        crp_size = self.strategy.parameters['crp_size']
         transform_img = create_transform_img(img_size, crp_size)
 
-        if self.strategy.parameters['architecture'] == 'efficientad':  
+        if self.strategy.parameters['architecture'] == 'efficientad':
             x = torch.cat([torch.unsqueeze(transform_img(img),dim=0), torch.unsqueeze(transform_img(transform_ae(img)),dim=0)])
             return x, np.asarray(y), np.asarray(idx), np.asarray(anomaly_info), filepath
-        elif self.strategy.parameters['architecture'] == 'draem':  
+        elif self.strategy.parameters['architecture'] == 'draem':
             anomaly_source_idx = torch.randint(0, len(self.anomaly_source_paths), (1,)).item()
             image, augmented_image, anomaly_mask, has_anomaly = self.transform_image_draem(filepath_img,
                                                                             self.anomaly_source_paths[anomaly_source_idx])
@@ -931,7 +942,7 @@ class MemoryDataset(Dataset):
             x = transform_img(img)
             return x, np.asarray(y), np.asarray(idx), np.asarray(anomaly_info), filepath
 
-        
+
 class ContinualLearningBenchmark:#returns task_stream = (train, test dataset) in specified order by the array task_order
     def __init__(self,complete_train_dataset, complete_test_dataset, num_tasks, task_order):
         self.complete_train_dataset = complete_train_dataset
@@ -954,7 +965,7 @@ class ContinualLearningBenchmark:#returns task_stream = (train, test dataset) in
 
         train_stream = datasets_train_list
         test_stream  = datasets_test_list
-        
+
         task_stream = train_stream,test_stream
 
         return task_stream
